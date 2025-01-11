@@ -1,5 +1,5 @@
 <script lang="ts">
-	let message = '';
+	let value = $state('');
 	let inputElement: HTMLInputElement;
 
 	function autoFocus(node: HTMLElement) {
@@ -30,9 +30,9 @@
 	}
 
 	function handleSubmit() {
-		if (!message.trim()) return;
+		if (!value.trim()) return;
 		// handle message sending here
-		message = '';
+		value = '';
 	}
 </script>
 
@@ -97,16 +97,16 @@
 </div>
 
 <div class="bg-base-100 p-2">
-	<form class="join flex" on:submit|preventDefault={handleSubmit}>
+	<form class="join flex" onsubmit={handleSubmit}>
 		<input
-			bind:value={message}
+			bind:value
 			bind:this={inputElement}
 			use:autoFocus
 			type="text"
 			placeholder="Type a message..."
 			class="no-highlight input join-item flex-1"
 		/>
-		<button type="submit" class="btn btn-primary join-item" disabled={!message.trim()}>Send</button>
+		<button type="submit" class="btn btn-primary join-item" disabled={!value.trim()}>Send</button>
 	</form>
 </div>
 
