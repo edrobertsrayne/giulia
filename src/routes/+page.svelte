@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { marked } from 'marked';
+	import DOMPurify from 'dompurify';
 
 	let value = $state('');
 	let inputElement: HTMLInputElement;
@@ -49,7 +51,11 @@
 		}
 	});
 
-	function onScroll() {
+	async function renderMessage(text: string) {
+		return DOMPurify.sanitize(await marked.parse(text));
+	}
+
+	function onscroll() {
 		const { scrollTop, scrollHeight, clientHeight } = chatContainer;
 		enableAutoScroll = scrollHeight - (scrollTop + clientHeight) < 100;
 	}
@@ -109,11 +115,14 @@
 	});
 </script>
 
-<div class="flex-1 overflow-y-auto bg-base-200 p-4" bind:this={chatContainer} onscroll={onScroll}>
+<div class="flex-1 overflow-y-auto bg-base-200 p-4" bind:this={chatContainer} {onscroll}>
 	{#each messages as message}
 		<div class="chat chat-{message.role == 'assistant' ? 'start' : 'end'}">
 			<div class="chat-bubble {message.role == 'assistant' ? 'chat-bubble-secondary' : ''}">
-				{message.content}
+				{#await renderMessage(message.content) then content}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					{@html content}
+				{/await}
 			</div>
 		</div>
 	{/each}
