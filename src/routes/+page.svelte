@@ -1,43 +1,19 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
 	let value = $state('');
 	let inputElement: HTMLInputElement;
 	let chatContainer: HTMLDivElement;
 
 	let enableAutoScroll = $state(true);
 
-	type MessageSender = 'host' | 'user';
+	type MessageSender = 'assistant' | 'user';
 	interface Message {
 		content: string;
-		sender: MessageSender;
+		role: MessageSender;
 	}
 
-	let messages = $state<Message[]>([
-		{
-			sender: 'host',
-			content:
-				'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc auctor nisi condimentum ipsum tempus consectetur. Nullam eu pharetra metus. Morbi sodales bibendum dolor, at consectetur orci sollicitudin nec. Fusce sit amet interdum quam. Sed augue felis, pulvinar nec aliquet a, hendrerit a arcu. Donec mollis, urna a malesuada pulvinar, erat sapien consequat lorem, in sodales nisl felis nec turpis. Donec rutrum commodo imperdiet. Nam a dignissim justo. Nulla egestas risus arcu, vitae bibendum erat tincidunt ut. Ut aliquet interdum consequat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;'
-		},
-		{
-			sender: 'user',
-			content:
-				'Maecenas interdum nibh vitae nisi iaculis, a elementum nunc convallis. Proin malesuada tristique neque, sed pharetra dui pulvinar quis. Donec vestibulum a mauris in maximus. Phasellus et ipsum convallis dolor efficitur feugiat. Phasellus facilisis nulla urna, ac imperdiet ipsum elementum accumsan. Curabitur libero odio, convallis vel ex a, laoreet bibendum neque. Aenean id tellus massa. Ut euismod dictum magna et mollis. Proin feugiat fermentum justo. Nunc at tortor cursus tortor feugiat euismod. Etiam erat quam, mattis et lacinia a, fermentum sit amet eros. Vivamus vitae commodo nisi, at pharetra lorem. Fusce a quam id enim dictum rhoncus. Proin sit amet cursus quam. Nullam quis risus a nunc ornare blandit. Nulla nec mi leo.'
-		},
-		{
-			sender: 'host',
-			content:
-				'Aliquam fermentum nisl nec mattis euismod. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce tristique nibh in rhoncus tincidunt. Cras gravida ex augue, gravida congue leo eleifend consectetur. Phasellus mollis at erat non condimentum. Pellentesque lorem enim, viverra vitae felis at, tincidunt tincidunt orci. Nam a libero facilisis, molestie lorem vitae, venenatis ipsum. Etiam tempus ornare convallis.'
-		},
-		{
-			sender: 'user',
-			content:
-				'Cras augue quam, vestibulum sit amet viverra at, lobortis ut nulla. Integer ultrices fermentum lacus, non ultrices arcu tincidunt et. Vivamus a accumsan nulla. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer venenatis vel nisi id tempor. Integer eros velit, laoreet vitae scelerisque eu, scelerisque sit amet dui. Nulla ultricies erat vel nisi pellentesque, et ultricies justo elementum. In sed blandit mi. Sed ipsum diam, mattis at tortor nec, accumsan ullamcorper ligula. Aenean sed dolor nec nisl ultrices facilisis at vel nulla. Curabitur at ultrices neque. Proin et faucibus massa. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Ut et velit sed est pellentesque consequat.'
-		},
-		{
-			sender: 'host',
-			content:
-				'In hac habitasse platea dictumst. Nulla facilisi. Etiam et dui pellentesque dui interdum eleifend consectetur ut diam. Nulla facilisi. Nulla a tortor ac leo aliquam rutrum in nec lorem. Aenean quis ligula nulla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Nunc consequat, eros a mollis pellentesque, eros ante euismod risus, venenatis dictum ex libero in sem. Donec tincidunt justo risus, sed volutpat libero iaculis a. Suspendisse vestibulum, ligula molestie lacinia venenatis, augue purus dapibus mauris, nec dictum mi eros quis nibh. Duis in porta nibh.'
-		}
-	]);
+	let messages = $state<Message[]>([]);
 
 	function autoFocus(node: HTMLElement) {
 		node.focus();
@@ -78,24 +54,65 @@
 		enableAutoScroll = scrollHeight - (scrollTop + clientHeight) < 100;
 	}
 
+	async function sendMessages(messagesToSend: Message[]) {
+		try {
+			const response = await fetch('/api/chat', {
+				method: 'POST',
+				body: JSON.stringify({ messages: messagesToSend })
+			});
+
+			const data = await response.json();
+			for (let message of data.content) {
+				messages.push({ content: message.text, role: 'assistant' });
+			}
+
+			enableAutoScroll = true;
+		} catch (error) {
+			console.error('Error sending message:', error);
+		}
+	}
+
 	function scrollToBottom() {
 		setTimeout(() => {
 			chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 		}, 0);
 	}
 
-	function handleSubmit() {
+	async function handleSubmit() {
 		if (!value.trim()) return;
-		messages.push({ content: value, sender: 'user' });
-		value = '';
+
+		messages.push({ content: value, role: 'user' });
 		enableAutoScroll = true;
+
+		await sendMessages($state.snapshot(messages));
+
+		value = '';
 	}
+
+	onMount(async () => {
+		const instructions = [
+			'Act as a supportive Italian teacher called Giulia.',
+			'Provide a conversation class aimed at a beginner Italian learner.',
+			'When they make mistakes, try and offer help.',
+			'Stick to Italian for the whole conversation and do not provide translations.',
+			'When the user has finished the conversation the user will type "thank you".',
+			'After the conversation, provide them with some feedback in English to help them improve.',
+			'Start the conversation by introducing yourself and letting the user know the stop phrase.'
+		];
+		const contextMessage: Message[] = [
+			{
+				role: 'user',
+				content: instructions.join(' ')
+			}
+		];
+		sendMessages(contextMessage);
+	});
 </script>
 
 <div class="flex-1 overflow-y-auto bg-base-200 p-4" bind:this={chatContainer} onscroll={onScroll}>
 	{#each messages as message}
-		<div class="chat chat-{message.sender == 'host' ? 'start' : 'end'}">
-			<div class="chat-bubble {message.sender == 'host' ? 'chat-bubble-secondary' : ''}">
+		<div class="chat chat-{message.role == 'assistant' ? 'start' : 'end'}">
+			<div class="chat-bubble {message.role == 'assistant' ? 'chat-bubble-secondary' : ''}">
 				{message.content}
 			</div>
 		</div>
