@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
+	import { firekitAuth } from 'svelte-firekit';
 
 	let value = $state('');
 	let inputElement: HTMLInputElement;

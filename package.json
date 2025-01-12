@@ -37,6 +37,8 @@
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.33.1",
 		"dompurify": "^3.2.3",
-		"marked": "^15.0.6"
+		"firebase": "^11.1.0",
+		"marked": "^15.0.6",
+		"svelte-firekit": "^0.0.22"
 	}
 }
