@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { firekitAuth, firekitUser } from 'svelte-firekit';
 	import { setContext } from 'svelte';
+	import { localStore } from '$lib/localstore.svelte';
 
 	let { children } = $props();
 
@@ -22,11 +23,11 @@
 	}
 
 	function toggleTextToSpeech() {
-		enableTextToSpeech = !enableTextToSpeech;
+		enableTextToSpeech.value = !enableTextToSpeech.value;
 	}
 
-	let enableTextToSpeech = $state(false);
-	setContext('enableTextToSpeech', () => enableTextToSpeech);
+	let enableTextToSpeech = localStore('enableTextToSpeech', false);
+	setContext('enableTextToSpeech', enableTextToSpeech);
 </script>
 
 <div class="drawer h-screen">
@@ -91,7 +92,7 @@
 			<!-- Sidebar content -->
 			<li>
 				<button onclick={toggleTextToSpeech}
-					>{enableTextToSpeech ? 'Disable' : 'Enable'} Text to Speech</button
+					>{enableTextToSpeech.value ? 'Disable' : 'Enable'} Text to Speech</button
 				>
 			</li>
 			<li><button onclick={handleSignOut}>Logout</button></li>
