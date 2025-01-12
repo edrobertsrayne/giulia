@@ -2,12 +2,11 @@
 	import { onMount } from 'svelte';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
-	import { firekitAuth, firekitUser } from 'svelte-firekit';
+	import { firekitUser } from 'svelte-firekit';
 
 	let value = $state('');
 	let inputElement: HTMLInputElement;
 	let chatContainer: HTMLDivElement;
-
 	let enableAutoScroll = $state(true);
 
 	type MessageSender = 'assistant' | 'user';
@@ -17,6 +16,29 @@
 	}
 
 	let messages = $state<Message[]>([]);
+
+	async function generateTTS(text: string) {
+		try {
+			const response = await fetch('/api/speech', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ text })
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to generate TTS');
+			}
+
+			const blob = await response.blob();
+			const audioUrl = URL.createObjectURL(blob);
+			const audio = new Audio(audioUrl);
+			await audio.play();
+		} catch (error) {
+			console.error(error);
+		}
+	}
 
 	function autoFocus(node: HTMLElement) {
 		node.focus();
@@ -71,6 +93,7 @@
 			const data = await response.json();
 			for (let message of data.content) {
 				messages.push({ content: message.text, role: 'assistant' });
+				await generateTTS(message.text);
 			}
 
 			enableAutoScroll = true;
