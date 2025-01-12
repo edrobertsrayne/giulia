@@ -3,6 +3,7 @@
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
 	import { firekitUser } from 'svelte-firekit';
+	import { getContext } from 'svelte';
 
 	let value = $state('');
 	let inputElement: HTMLInputElement;
@@ -16,6 +17,7 @@
 	}
 
 	let messages = $state<Message[]>([]);
+	const enableTextToSpeech: () => boolean = getContext('enableTextToSpeech');
 
 	async function generateTTS(text: string) {
 		try {
@@ -74,6 +76,10 @@
 		}
 	});
 
+	$effect(() => {
+		console.log(enableTextToSpeech());
+	});
+
 	async function renderMessage(text: string) {
 		return DOMPurify.sanitize(await marked.parse(text));
 	}
@@ -93,7 +99,9 @@
 			const data = await response.json();
 			for (let message of data.content) {
 				messages.push({ content: message.text, role: 'assistant' });
-				await generateTTS(message.text);
+				if (enableTextToSpeech()) {
+					await generateTTS(message.text);
+				}
 			}
 
 			enableAutoScroll = true;
