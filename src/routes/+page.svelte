@@ -1,75 +1,18 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { marked } from 'marked';
-	import DOMPurify from 'dompurify';
-	import { firekitUser } from 'svelte-firekit';
-	import { getContext } from 'svelte';
+	import { autoFocus, contextMessage, generateTTS, renderMessage } from '$lib';
 	import { LocalStore } from '$lib/localstore.svelte';
+	import type { Message } from '$lib/types';
+	import { getContext, onMount } from 'svelte';
+	import { firekitUser } from 'svelte-firekit';
 
 	let value = $state('');
 	let inputElement: HTMLInputElement;
 	let chatContainer: HTMLDivElement;
 	let enableAutoScroll = $state(true);
 
-	type MessageSender = 'assistant' | 'user';
-	interface Message {
-		content: string;
-		role: MessageSender;
-	}
-
 	let messages = $state<Message[]>([]);
 
 	let enableTextToSpeech: LocalStore<boolean> = getContext('enableTextToSpeech');
-
-	async function generateTTS(text: string) {
-		try {
-			const response = await fetch('/api/speech', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ text })
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to generate TTS');
-			}
-
-			const blob = await response.blob();
-			const audioUrl = URL.createObjectURL(blob);
-			const audio = new Audio(audioUrl);
-			await audio.play();
-		} catch (error) {
-			console.error(error);
-		}
-	}
-
-	function autoFocus(node: HTMLElement) {
-		node.focus();
-
-		// refocus after clicking in the app
-		const handleClick = () => {
-			node.focus();
-		};
-
-		// refocus after sending a message
-		const handleBlur = () => {
-			// allow other handlers to execute first
-			setTimeout(() => {
-				node.focus();
-			}, 0);
-		};
-
-		document.addEventListener('click', handleClick);
-		node.addEventListener('blur', handleBlur);
-
-		return {
-			destroy() {
-				document.removeEventListener('click', handleClick);
-				node.removeEventListener('blur', handleBlur);
-			}
-		};
-	}
 
 	$effect(() => {
 		if (chatContainer && enableAutoScroll) {
@@ -77,10 +20,6 @@
 			enableAutoScroll = false;
 		}
 	});
-
-	async function renderMessage(text: string) {
-		return DOMPurify.sanitize(await marked.parse(text));
-	}
 
 	function onscroll() {
 		const { scrollTop, scrollHeight, clientHeight } = chatContainer;
@@ -126,21 +65,6 @@
 	}
 
 	onMount(async () => {
-		const instructions = [
-			'Act as a supportive Italian teacher called Giulia.',
-			'Provide a conversation class aimed at a beginner Italian learner.',
-			'When they make mistakes, try and offer help.',
-			'Stick to Italian for the whole conversation and do not provide translations.',
-			'When the user has finished the conversation the user will type "thank you".',
-			'After the conversation, provide them with some feedback in English to help them improve.',
-			'Start the conversation by introducing yourself and letting the user know the stop phrase.'
-		];
-		const contextMessage: Message[] = [
-			{
-				role: 'user',
-				content: instructions.join(' ')
-			}
-		];
 		sendMessages(contextMessage);
 	});
 </script>
