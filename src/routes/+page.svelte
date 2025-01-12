@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
-	import { firekitAuth } from 'svelte-firekit';
+	import { firekitAuth, firekitUser } from 'svelte-firekit';
 
 	let value = $state('');
 	let inputElement: HTMLInputElement;
@@ -119,12 +119,15 @@
 <div class="flex-1 overflow-y-auto bg-base-200 p-4" bind:this={chatContainer} {onscroll}>
 	{#each messages as message}
 		<div class="chat chat-{message.role == 'assistant' ? 'start' : 'end'}">
-			{#if message.role == 'assistant'}
-				<div class="avatar chat-image">
-					<div class="w-10 rounded-full">
+			<div class="avatar chat-image">
+				<div class="w-10 rounded-full">
+					{#if message.role == 'assistant'}
 						<img src="/avatar.webp" alt="Giulia's avatar" />
-					</div>
-				</div>{/if}
+					{:else}
+						<img src={firekitUser.photoURL} alt="User's avatar" />
+					{/if}
+				</div>
+			</div>
 			<div class="chat-bubble {message.role == 'assistant' ? 'chat-bubble-secondary' : ''}">
 				{#await renderMessage(message.content) then content}
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
