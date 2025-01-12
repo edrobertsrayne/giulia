@@ -118,6 +118,12 @@
 <div class="flex-1 overflow-y-auto bg-base-200 p-4" bind:this={chatContainer} {onscroll}>
 	{#each messages as message}
 		<div class="chat chat-{message.role == 'assistant' ? 'start' : 'end'}">
+			{#if message.role == 'assistant'}
+				<div class="avatar chat-image">
+					<div class="w-10 rounded-full">
+						<img src="/avatar.webp" alt="Giulia's avatar" />
+					</div>
+				</div>{/if}
 			<div class="chat-bubble {message.role == 'assistant' ? 'chat-bubble-secondary' : ''}">
 				{#await renderMessage(message.content) then content}
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
