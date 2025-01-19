@@ -8,10 +8,28 @@
 	let value = $state('');
 	let inputElement: HTMLInputElement;
 	let chatContainer: HTMLDivElement;
+	let micButton: HTMLButtonElement;
+	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+	// @ts-expect-error [7034]
+	let recognition;
+
+	if (SpeechRecognition) {
+		recognition = new SpeechRecognition();
+
+		recognition.lang = 'it-IT';
+
+		// eslint-disable-next-line no-undef
+		recognition.onresult = (event: { results: SpeechRecognitionResultList }) => {
+			const transcript = event.results[0][0].transcript;
+			value = transcript;
+			handleSubmit();
+		};
+	} else {
+		console.error('Speech recognition is not supported in this browser.');
+	}
+
 	let enableAutoScroll = $state(true);
-
 	let messages = $state<Message[]>([]);
-
 	let enableTextToSpeech: LocalStore<boolean> = getContext('enableTextToSpeech');
 
 	$effect(() => {
@@ -64,6 +82,11 @@
 		value = '';
 	}
 
+	function handleRecognition() {
+		// @ts-expect-error [7005]
+		recognition.start();
+	}
+
 	onMount(async () => {
 		sendMessages(contextMessage);
 	});
@@ -91,18 +114,40 @@
 	{/each}
 </div>
 
-<div class="bg-base-100 p-2">
-	<form class="join flex" onsubmit={handleSubmit}>
-		<input
-			bind:value
-			bind:this={inputElement}
-			use:autoFocus
-			type="text"
-			placeholder="Type a message..."
-			class="no-highlight input join-item flex-1"
-		/>
-		<button type="submit" class="btn btn-primary join-item" disabled={!value.trim()}>Send</button>
-	</form>
+<div class="flex bg-base-100 p-2">
+	<div class="flex-1">
+		<form class="join flex" onsubmit={handleSubmit}>
+			<input
+				bind:value
+				bind:this={inputElement}
+				use:autoFocus
+				type="text"
+				placeholder="Type a message..."
+				class="no-highlight input join-item flex-1"
+			/>
+			<button type="submit" class="btn btn-primary join-item" disabled={!value.trim()}>Send</button>
+		</form>
+	</div>
+	<button
+		type="button"
+		aria-label="record voice input"
+		class="btn btn-circle {SpeechRecognition ? 'btn-accent' : 'btn-disabled'} ml-2 flex-none"
+		bind:this={micButton}
+		onclick={handleRecognition}
+		disabled={!SpeechRecognition}
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			height="24px"
+			viewBox="0 -960 960 960"
+			width="24px"
+			fill="#e8eaed"
+		>
+			<path
+				d="M480-400q-50 0-85-35t-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35Zm0-240Zm-40 520v-123q-104-14-172-93t-68-184h80q0 83 58.5 141.5T480-320q83 0 141.5-58.5T680-520h80q0 105-68 184t-172 93v123h-80Zm40-360q17 0 28.5-11.5T520-520v-240q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760v240q0 17 11.5 28.5T480-480Z"
+			/>
+		</svg>
+	</button>
 </div>
 
 <style>
