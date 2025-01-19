@@ -15,7 +15,7 @@
 		window.webkitSpeechRecognition ||
 		window.mozSpeechRecognition ||
 		window.msSpeechRecognition;
-	let recognition: SpeechRecognition | null = $state(null);
+	let recognition: typeof SpeechRecognition | null = null;
 
 	if (SpeechRecognition) {
 		recognition = new SpeechRecognition();
@@ -87,6 +87,10 @@
 		value = '';
 	}
 
+	function handleRecognition() {
+		recognition.start();
+	}
+
 	onMount(async () => {
 		sendMessages(contextMessage);
 	});
@@ -133,7 +137,7 @@
 		aria-label="record voice input"
 		class="btn btn-circle {SpeechRecognition ? 'btn-accent' : 'btn-disabled'} ml-2 flex-none"
 		bind:this={micButton}
-		onclick={recognition.start()}
+		onclick={handleRecognition}
 		disabled={!SpeechRecognition}
 	>
 		<svg
