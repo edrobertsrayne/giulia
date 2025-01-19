@@ -18,6 +18,7 @@
 
 		recognition.lang = 'it-IT';
 
+		// eslint-disable-next-line no-undef
 		recognition.onresult = (event: { results: SpeechRecognitionResultList }) => {
 			const transcript = event.results[0][0].transcript;
 			value = transcript;
