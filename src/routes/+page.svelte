@@ -9,32 +9,26 @@
 	let inputElement: HTMLInputElement;
 	let chatContainer: HTMLDivElement;
 	let micButton: HTMLButtonElement;
-
-	const SpeechRecognition =
-		window.SpeechRecognition ||
-		window.webkitSpeechRecognition ||
-		window.mozSpeechRecognition ||
-		window.msSpeechRecognition;
-	let recognition: typeof SpeechRecognition | null = null;
+	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+	// @ts-expect-error [7034]
+	let recognition;
 
 	if (SpeechRecognition) {
 		recognition = new SpeechRecognition();
+
 		recognition.lang = 'it-IT';
 
-		recognition.onresult = (event: SpeechRecognitionEvent) => {
+		recognition.onresult = (event: { results: SpeechRecognitionResultList }) => {
 			const transcript = event.results[0][0].transcript;
 			value = transcript;
 			handleSubmit();
-			console.log(transcript);
 		};
 	} else {
 		console.error('Speech recognition is not supported in this browser.');
 	}
 
 	let enableAutoScroll = $state(true);
-
 	let messages = $state<Message[]>([]);
-
 	let enableTextToSpeech: LocalStore<boolean> = getContext('enableTextToSpeech');
 
 	$effect(() => {
@@ -88,6 +82,7 @@
 	}
 
 	function handleRecognition() {
+		// @ts-expect-error [7005]
 		recognition.start();
 	}
 
